@@ -1,6 +1,6 @@
 [package]
 name = "bevy-steamworks"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["james7132 <contact@jamessliu.com>"]
 edition = "2021"
 description = "A Bevy plugin for integrating with the Steamworks SDK."
@@ -16,8 +16,8 @@ serde = ["steamworks/serde"]
 bevy_log = "0.10"
 bevy_app = "0.10"
 bevy_ecs = "0.10"
+bevy_utils = "0.10"
 steamworks = "0.9"
-parking_lot = "0.12"
 
 [dev-dependencies]
 bevy = "0.10"

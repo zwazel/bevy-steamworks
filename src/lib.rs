@@ -3,26 +3,8 @@
 //! This crate provides a [Bevy](https://bevyengine.org/) plugin for integrating with
 //! the Steamworks SDK.
 //!
-//! ## Bevy Version Supported
-//!
-//! |Bevy Version |bevy\_steamworks|
-//! |:------------|:---------------|
-//! |git (main)   |git (develop)   |
-//! |0.8          |0.5             |
-//! |0.7          |0.4             |
-//! |0.6          |0.2, 0.3        |
-//! |0.5          |0.1             |
-//!
-//! ## Installation
-//! Add the following to your `Cargo.toml`:
-//!
-//! ```toml
-//! [dependencies]
-//! bevy-steamworks = "0.5"
-//! ```
-//!
-//! The steamworks crate comes bundled with the redistributable dynamic libraries
-//! of a compatible version of the SDK. Currently it's v153a.
+//! The underlying steamworks crate comes bundled with the redistributable dynamic
+//! libraries a compatible version of the SDK. Currently it's v153a.
 //!
 //! ## Usage
 //!
@@ -86,30 +68,30 @@ use bevy_ecs::{
     schedule::*,
     system::{NonSend, ResMut, Resource},
 };
-use parking_lot::Mutex;
+use bevy_utils::syncunsafecell::SyncUnsafeCell;
 // Reexport everything from steamworks except for the clients
 pub use steamworks::{
-    AccountId, AppId, AppIDs, Apps, AuthSessionError,
-    AuthSessionTicketResponse, AuthSessionValidateError, AuthTicket, Callback, CallbackHandle, ChatMemberStateChange,
-    ClientManager, CreateQueryError, DownloadItemResult, FileType, Friend, FriendFlags,
-    FriendGame, Friends, FriendState, GameId, GameLobbyJoinRequested, InstallInfo, InvalidErrorCode, ItemDetailsQuery,
-    ItemListDetailsQuery, ItemState, Leaderboard, LeaderboardDataRequest, LeaderboardDisplayType,
-    LeaderboardEntry, LeaderboardScoreUploaded, LeaderboardSortMethod, LobbyChatUpdate, LobbyId,
-    LobbyType, Matchmaking, Networking, networking_messages::*, networking_sockets::*,
-    networking_utils::*, NotificationPosition, P2PSessionConnectFail, P2PSessionRequest, PersonaChange,
-    PersonaStateChange, PublishedFileId, QueryResult, QueryResults, RemoteStorage, RESULTS_PER_PAGE,
-    SendType, Server, ServerManager, ServerMode, SingleClient, SResult, stats::*, SteamError,
-    SteamFile, SteamFileInfo, SteamFileReader, SteamFileWriter, SteamId,
-    SteamServerConnectFailure, SteamServersConnected, SteamServersDisconnected, UGC, UGCStatisticType,
-    UGCType, UpdateHandle, UpdateStatus, UpdateWatchHandle, UploadScoreMethod, User,
-    UserAchievementStored, UserList, UserListOrder, UserListQuery, UserStats, UserStatsReceived,
-    UserStatsStored, Utils, ValidateAuthTicketResponse,
+    networking_messages::*, networking_sockets::*, networking_utils::*, stats::*, AccountId,
+    AppIDs, AppId, Apps, AuthSessionError, AuthSessionTicketResponse, AuthSessionValidateError,
+    AuthTicket, Callback, CallbackHandle, ChatMemberStateChange, ClientManager, CreateQueryError,
+    DownloadItemResult, FileType, Friend, FriendFlags, FriendGame, FriendState, Friends, GameId,
+    GameLobbyJoinRequested, InstallInfo, InvalidErrorCode, ItemDetailsQuery, ItemListDetailsQuery,
+    ItemState, Leaderboard, LeaderboardDataRequest, LeaderboardDisplayType, LeaderboardEntry,
+    LeaderboardScoreUploaded, LeaderboardSortMethod, LobbyChatUpdate, LobbyId, LobbyType,
+    Matchmaking, Networking, NotificationPosition, P2PSessionConnectFail, P2PSessionRequest,
+    PersonaChange, PersonaStateChange, PublishedFileId, QueryResult, QueryResults, RemoteStorage,
+    SResult, SendType, Server, ServerManager, ServerMode, SingleClient, SteamError, SteamFile,
+    SteamFileInfo, SteamFileReader, SteamFileWriter, SteamId, SteamServerConnectFailure,
+    SteamServersConnected, SteamServersDisconnected, UGCStatisticType, UGCType, UpdateHandle,
+    UpdateStatus, UpdateWatchHandle, UploadScoreMethod, User, UserAchievementStored, UserList,
+    UserListOrder, UserListQuery, UserStats, UserStatsReceived, UserStatsStored, Utils,
+    ValidateAuthTicketResponse, RESULTS_PER_PAGE, UGC,
 };
 
 #[derive(Resource)]
 struct SteamEvents<T> {
     _callback: CallbackHandle,
-    pending: Arc<Mutex<Vec<T>>>,
+    pending: Arc<SyncUnsafeCell<Vec<T>>>,
 }
 
 /// A Bevy compatible wrapper around [`steamworks::Client`].
@@ -152,10 +134,13 @@ impl Plugin for SteamworksPlugin {
             Ok((client, single)) => {
                 app.insert_resource(Client(client.clone()))
                     .insert_non_send_resource(single)
-                    .add_system(run_steam_callbacks
-                        .in_base_set(CoreSet::First)
-                        .in_set(SteamworksSystem::RunCallbacks),
-                    );
+                    .configure_set(SteamworksSystem::RunCallbacks.in_base_set(CoreSet::First))
+                    .configure_set(
+                        SteamworksSystem::FlushEvents
+                            .in_base_set(CoreSet::First)
+                            .after(SteamworksSystem::RunCallbacks),
+                    )
+                    .add_system(run_steam_callbacks.in_set(SteamworksSystem::RunCallbacks));
 
                 add_event::<AuthSessionTicketResponse>(app, &client);
                 add_event::<DownloadItemResult>(app, &client);
@@ -202,7 +187,10 @@ fn flush_events<T: Send + Sync + 'static>(
     events: ResMut<SteamEvents<T>>,
     mut output: EventWriter<T>,
 ) {
-    let mut pending = events.pending.lock();
+    // SAFETY: The callback is only called during `run_steam_callbacks` which cannot run
+    // while any of the flush_events systems are running. The system is registered only once for
+    // the client. This cannot alias.
+    let pending = unsafe { &mut *events.pending.get() };
     if !pending.is_empty() {
         output.send_batch(pending.drain(0..));
     }
@@ -212,18 +200,18 @@ fn add_event<T: Callback + Send + Sync + 'static>(
     app: &mut App,
     client: &steamworks::Client<ClientManager>,
 ) {
-    let pending = Arc::new(Mutex::new(Vec::new()));
+    let pending = Arc::new(SyncUnsafeCell::new(Vec::new()));
     let pending_in = pending.clone();
     app.add_event::<T>()
         .insert_resource(SteamEvents::<T> {
             _callback: client.register_callback::<T, _>(move |evt| {
-                pending_in.lock().push(evt);
+                // SAFETY: The callback is only called during `run_steam_callbacks` which cannot run
+                // while any of the flush_events systems are running. This cannot alias.
+                unsafe {
+                    (&mut *pending_in.get()).push(evt);
+                }
             }),
             pending,
         })
-        .add_system(
-            flush_events::<T>
-                .in_set(SteamworksSystem::FlushEvents)
-                .after(SteamworksSystem::RunCallbacks),
-        );
+        .add_system(flush_events::<T>.in_set(SteamworksSystem::FlushEvents));
 }
