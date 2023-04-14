@@ -87,6 +87,7 @@ pub use steamworks::{
     UserListOrder, UserListQuery, UserStats, UserStatsReceived, UserStatsStored, Utils,
     ValidateAuthTicketResponse, RESULTS_PER_PAGE, UGC,
 };
+use steamworks::LobbyDataUpdate;
 
 #[derive(Resource)]
 struct SteamEvents<T> {
@@ -156,6 +157,7 @@ impl Plugin for SteamworksPlugin {
                 add_event::<UserStatsReceived>(app, &client);
                 add_event::<UserStatsStored>(app, &client);
                 add_event::<ValidateAuthTicketResponse>(app, &client);
+                add_event::<LobbyDataUpdate>(app, &client);
             }
         }
     }
