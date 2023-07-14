@@ -111,6 +111,7 @@ pub enum SteamworksEvent {
     UserStatsReceived(steamworks::UserStatsReceived),
     UserStatsStored(steamworks::UserStatsStored),
     ValidateAuthTicketResponse(steamworks::ValidateAuthTicketResponse),
+    LobbyDataUpdate(steamworks::LobbyDataUpdate)
 }
 
 macro_rules! register_event_callbacks {
