@@ -70,22 +70,25 @@ use bevy_ecs::{
     system::{NonSend, ResMut, Resource},
 };
 use bevy_utils::syncunsafecell::SyncUnsafeCell;
-// Reexport everything from steamworks except for the clients
-pub use steamworks::networking_types::{NetworkingAvailability, NetworkingAvailabilityError};
 pub use steamworks::{
     networking_messages::*, networking_sockets::*, networking_utils::*, stats::*, AccountId,
-    AppIDs, AppId, Apps, AuthSessionError, AuthSessionValidateError, AuthTicket, Callback,
-    CallbackHandle, ChatMemberStateChange, ClientManager, CreateQueryError, FileType, Friend,
-    FriendFlags, FriendGame, FriendState, Friends, GameId, Input, InstallInfo, InvalidErrorCode,
-    ItemDetailsQuery, ItemListDetailsQuery, ItemState, Leaderboard, LeaderboardDataRequest,
-    LeaderboardDisplayType, LeaderboardEntry, LeaderboardScoreUploaded, LeaderboardSortMethod,
-    LobbyId, LobbyType, Matchmaking, Networking, NotificationPosition, PersonaChange,
-    PublishedFileId, QueryResult, QueryResults, RemoteStorage, SResult, SendType, Server,
-    ServerManager, ServerMode, SingleClient, SteamError, SteamFile, SteamFileInfo, SteamFileReader,
-    SteamFileWriter, SteamId, UGCStatisticType, UGCType, UpdateHandle, UpdateStatus,
-    UpdateWatchHandle, UploadScoreMethod, User, UserList, UserListOrder, UserListQuery, UserStats,
-    Utils, RESULTS_PER_PAGE, UGC,
+    AppIDs, AppId, Apps, AuthSessionError, AuthSessionTicketResponse, AuthSessionValidateError,
+    AuthTicket, Callback, CallbackHandle, ChatMemberStateChange, ClientManager, CreateQueryError,
+    DownloadItemResult, FileType, Friend, FriendFlags, FriendGame, FriendState, Friends, GameId,
+    GameLobbyJoinRequested, Input, InstallInfo, InvalidErrorCode, ItemDetailsQuery,
+    ItemListDetailsQuery, ItemState, Leaderboard, LeaderboardDataRequest, LeaderboardDisplayType,
+    LeaderboardEntry, LeaderboardScoreUploaded, LeaderboardSortMethod, LobbyChatUpdate,
+    LobbyDataUpdate, LobbyId, LobbyType, Matchmaking, Networking, NotificationPosition,
+    P2PSessionConnectFail, P2PSessionRequest, PersonaChange, PersonaStateChange, PublishedFileId,
+    QueryResult, QueryResults, RemoteStorage, SResult, SendType, Server, ServerManager, ServerMode,
+    SingleClient, SteamError, SteamFile, SteamFileInfo, SteamFileReader, SteamFileWriter, SteamId,
+    SteamServerConnectFailure, SteamServersConnected, SteamServersDisconnected, UGCStatisticType,
+    UGCType, UpdateHandle, UpdateStatus, UpdateWatchHandle, UploadScoreMethod, User,
+    UserAchievementStored, UserList, UserListOrder, UserListQuery, UserStats, UserStatsReceived,
+    UserStatsStored, Utils, ValidateAuthTicketResponse, RESULTS_PER_PAGE, UGC,
 };
+// Reexport everything from steamworks except for the clients
+pub use steamworks::networking_types::{NetworkingAvailability, NetworkingAvailabilityError};
 
 #[derive(Resource)]
 struct SteamEvents {
@@ -97,21 +100,21 @@ struct SteamEvents {
 #[derive(Event)]
 #[allow(missing_docs)]
 pub enum SteamworksEvent {
-    AuthSessionTicketResponse(steamworks::AuthSessionTicketResponse),
-    DownloadItemResult(steamworks::DownloadItemResult),
-    GameLobbyJoinRequested(steamworks::GameLobbyJoinRequested),
-    LobbyChatUpdate(steamworks::LobbyChatUpdate),
-    P2PSessionConnectFail(steamworks::P2PSessionConnectFail),
-    P2PSessionRequest(steamworks::P2PSessionRequest),
-    PersonaStateChange(steamworks::PersonaStateChange),
-    SteamServerConnectFailure(steamworks::SteamServerConnectFailure),
-    SteamServersConnected(steamworks::SteamServersConnected),
-    SteamServersDisconnected(steamworks::SteamServersDisconnected),
-    UserAchievementStored(steamworks::UserAchievementStored),
-    UserStatsReceived(steamworks::UserStatsReceived),
-    UserStatsStored(steamworks::UserStatsStored),
-    ValidateAuthTicketResponse(steamworks::ValidateAuthTicketResponse),
-    LobbyDataUpdate(steamworks::LobbyDataUpdate),
+    AuthSessionTicketResponse(AuthSessionTicketResponse),
+    DownloadItemResult(DownloadItemResult),
+    GameLobbyJoinRequested(GameLobbyJoinRequested),
+    LobbyChatUpdate(LobbyChatUpdate),
+    P2PSessionConnectFail(P2PSessionConnectFail),
+    P2PSessionRequest(P2PSessionRequest),
+    PersonaStateChange(PersonaStateChange),
+    SteamServerConnectFailure(SteamServerConnectFailure),
+    SteamServersConnected(SteamServersConnected),
+    SteamServersDisconnected(SteamServersDisconnected),
+    UserAchievementStored(UserAchievementStored),
+    UserStatsReceived(UserStatsReceived),
+    UserStatsStored(UserStatsStored),
+    ValidateAuthTicketResponse(ValidateAuthTicketResponse),
+    LobbyDataUpdate(LobbyDataUpdate),
 }
 
 macro_rules! register_event_callbacks {
