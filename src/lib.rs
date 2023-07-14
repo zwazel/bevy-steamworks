@@ -71,6 +71,7 @@ use bevy_ecs::{
 };
 use bevy_utils::syncunsafecell::SyncUnsafeCell;
 // Reexport everything from steamworks except for the clients
+pub use steamworks::networking_types::{NetworkingAvailability, NetworkingAvailabilityError};
 pub use steamworks::{
     networking_messages::*, networking_sockets::*, networking_utils::*, stats::*, AccountId,
     AppIDs, AppId, Apps, AuthSessionError, AuthSessionValidateError, AuthTicket, Callback,
@@ -85,7 +86,6 @@ pub use steamworks::{
     UpdateWatchHandle, UploadScoreMethod, User, UserList, UserListOrder, UserListQuery, UserStats,
     Utils, RESULTS_PER_PAGE, UGC,
 };
-use steamworks::LobbyDataUpdate;
 
 #[derive(Resource)]
 struct SteamEvents {
@@ -111,7 +111,7 @@ pub enum SteamworksEvent {
     UserStatsReceived(steamworks::UserStatsReceived),
     UserStatsStored(steamworks::UserStatsStored),
     ValidateAuthTicketResponse(steamworks::ValidateAuthTicketResponse),
-    LobbyDataUpdate(steamworks::LobbyDataUpdate)
+    LobbyDataUpdate(steamworks::LobbyDataUpdate),
 }
 
 macro_rules! register_event_callbacks {
