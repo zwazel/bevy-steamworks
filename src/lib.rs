@@ -80,12 +80,13 @@ pub use steamworks::{
     LeaderboardEntry, LeaderboardScoreUploaded, LeaderboardSortMethod, LobbyChatUpdate,
     LobbyDataUpdate, LobbyId, LobbyType, Matchmaking, Networking, NotificationPosition,
     P2PSessionConnectFail, P2PSessionRequest, PersonaChange, PersonaStateChange, PublishedFileId,
-    QueryResult, QueryResults, RemoteStorage, SResult, SendType, Server, ServerManager, ServerMode,
-    SingleClient, SteamError, SteamFile, SteamFileInfo, SteamFileReader, SteamFileWriter, SteamId,
-    SteamServerConnectFailure, SteamServersConnected, SteamServersDisconnected, UGCStatisticType,
-    UGCType, UpdateHandle, UpdateStatus, UpdateWatchHandle, UploadScoreMethod, User,
-    UserAchievementStored, UserList, UserListOrder, UserListQuery, UserStats, UserStatsReceived,
-    UserStatsStored, Utils, ValidateAuthTicketResponse, RESULTS_PER_PAGE, UGC,
+    PublishedFileVisibility, QueryResult, QueryResults, RemoteStorage, SResult, SendType, Server,
+    ServerManager, ServerMode, SingleClient, SteamError, SteamFile, SteamFileInfo, SteamFileReader,
+    SteamFileWriter, SteamId, SteamServerConnectFailure, SteamServersConnected,
+    SteamServersDisconnected, UGCStatisticType, UGCType, UpdateHandle, UpdateStatus,
+    UpdateWatchHandle, UploadScoreMethod, User, UserAchievementStored, UserList, UserListOrder,
+    UserListQuery, UserStats, UserStatsReceived, UserStatsStored, Utils,
+    ValidateAuthTicketResponse, RESULTS_PER_PAGE, UGC,
 };
 // Reexport everything from steamworks except for the clients
 pub use steamworks::networking_types::{NetworkingAvailability, NetworkingAvailabilityError};
